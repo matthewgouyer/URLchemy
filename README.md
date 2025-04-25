@@ -1,7 +1,7 @@
 temp read me
 
 .env version control note:
-make an .env file and add the following variables
+make an .env file in the root of the project and add the following variables
 
 # .env
 
