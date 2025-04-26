@@ -1,8 +1,8 @@
 temp read me
 
-run the following command to start the server
+run the following command to start the server:
 
-uvicorn shortener_app.main:app --reload
+uvicorn backend.main:app --reload
 
 fast api docs has backend commands for testing
 
