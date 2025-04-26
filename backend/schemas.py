@@ -9,9 +9,9 @@ class URL(URLBase):
     is_active: bool
     clicks: int
 
-    # give config to pydantic for ORM interaction of db
+    # give config to pydantic to allow for attributes to be used
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 #  potential temp storage of data
 class URLInfo(URL):
