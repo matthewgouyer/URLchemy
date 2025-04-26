@@ -53,14 +53,17 @@ def create_url(url: schemas.URLBase, db: Session = Depends(get_db)):
 def forward_to_target_url(
     url_key: str, request: Request, db: Session = Depends(get_db)
 ):
+    '''
     # query DB for URL w/ given key
     db_url = (
         db.query(models.URL)
         .filter(models.URL.key == url_key, models.URL.is_active)
         .first()
     )
+    '''
     # walrus operator for matching url found
     if db_url := crud.get_db_url_by_key(db=db, url_key=url_key):
+        crud.update_db_clicks(db=db, db_url=db_url) # increment click count
         # redirect to target url
         return RedirectResponse(db_url.target_url)
     else:
