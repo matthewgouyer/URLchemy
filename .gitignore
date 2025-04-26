@@ -1,2 +1,4 @@
 # Ignore SQLite database file
 data/urls.db
+# Ignore .env file
+.env
