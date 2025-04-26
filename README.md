@@ -1,6 +1,24 @@
 temp read me
 
-run the following command to start the server:
+intial setup:
+
+1. Clone the repo.
+
+2. Create a virtual environment in the root of the project.
+   ```bash
+   python -m venv .venv
+
+3. Activate the virtual environment.
+On Windows:
+.venv\Scripts\activate
+On macOS/Linux:
+source .venv/bin/activate
+
+4. Install the dependencies.
+pip install -r requirements.txt
+
+   
+5. Run the following command to start the server:
 
 uvicorn backend.main:app --reload
 

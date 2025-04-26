@@ -2,3 +2,5 @@
 data/urls.db
 # Ignore .env file
 .env
+
+.venv/
