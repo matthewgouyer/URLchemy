@@ -2,5 +2,6 @@
 data/urls.db
 # Ignore .env file
 .env
-
 .venv/
+# Ignore Python cache files
+backend/__pycache__
