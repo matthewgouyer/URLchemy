@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 
 from . import keygen, models, schemas
 from backend.keygen import create_random_key
+from .models import URL
 
 # create a new db entry for shortened url
 def create_db_url(db: Session, url: schemas.URLBase, title: str, description: str) -> models.URL:
@@ -50,3 +51,7 @@ def deactivate_db_url_by_secret_key(
         db.commit()
         db.refresh(db_url)
     return db_url
+
+# query unique urls for db viz
+def get_unique_urls(db: Session):
+    return db.query(URL.target_url).distinct().filter(URL.is_active == True).all()

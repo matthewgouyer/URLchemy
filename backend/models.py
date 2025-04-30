@@ -9,7 +9,7 @@ class URL(Base):
     id = Column(Integer, primary_key=True)              # primary key
     key = Column(String, unique=True, index=True)       # randomly generated key
     secret_key = Column(String, unique=True, index=True)# url management and stats for our scraper?
-    target_url = Column(String, index=True)             # where the provided shortened url points to
+    target_url = Column(String, unique=True, nullable=False)  # query unique urls
     title = Column(String, nullable=True)               # metadata scraped
     description = Column(String, nullable=True)         # metadata scraped
     is_active = Column(Boolean, default=True)

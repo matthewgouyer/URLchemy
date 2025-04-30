@@ -8,7 +8,7 @@ from . import crud, models, schemas
 from .database import SessionLocal, engine
 from .config import get_settings
 from .scraper import scrape_metadata
-from backend.keygen import create_random_key
+
 
 app = FastAPI()
 models.Base.metadata.create_all(bind=engine)
@@ -56,7 +56,7 @@ def raise_not_found(request):
     raise HTTPException(status_code=404, detail=message)
 
 
-@app.post("/url", response_model=schemas.URLInfo)
+@app.post("/url")
 def create_url(url: schemas.URLBase, db: Session = Depends(get_db)):
     if not validators.url(url.target_url):
         raise HTTPException(status_code=400, detail="Invalid URL provided")
@@ -68,7 +68,14 @@ def create_url(url: schemas.URLBase, db: Session = Depends(get_db)):
         title=metadata.get("title", "No title found"),
         description=metadata.get("description", "No description found")
     )
-    return get_public_info(db_url)
+
+    # spit out all unique URLs
+    unique_urls = crud.get_unique_urls(db)
+
+    return {
+        "shortened_url": get_public_info(db_url),
+        "unique_urls": [url[0] for url in unique_urls]
+    }
 
 # call for requested url to point to host and key pattern
 @app.get("/{url_key}")
@@ -108,3 +115,13 @@ def delete_url(
         return {"detail": message}
     else:
         raise_not_found(request) # raise 404 error if key is not found or deactivated
+
+'''
+
+# endpoint to get unique URLs list for db viz
+@app.get("/unique-urls")
+def get_unique_urls_endpoint(db: Session = Depends(get_db)):
+    unique_urls = crud.get_unique_urls(db)
+    return {"unique_urls": [url[0] for url in unique_urls]}
+    
+'''
