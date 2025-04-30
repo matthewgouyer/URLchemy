@@ -19,15 +19,26 @@ def get_db():
     finally:
         db.close()
 
-# admin info -> shortened url
-def get_admin_info(db_url: models.URL) -> schemas.URLInfo:
+# public info -> shortened URL
+def get_public_info(db_url: models.URL) -> schemas.URLInfo:
+    base_url = URL(get_settings().base_url)
+    return schemas.URLInfo(
+        url=str(base_url.replace(path=db_url.key)),
+        target_url=db_url.target_url,
+        is_active=db_url.is_active,
+        clicks=db_url.clicks,
+    )
+
+# admin info (public info + secret keys) -> shortened URL
+def get_admin_info(db_url: models.URL) -> schemas.URLAdminInfo:
     base_url = URL(get_settings().base_url)
     admin_endpoint = app.url_path_for(
         "administration info", secret_key=db_url.secret_key
     )
-    db_url.url = str(base_url.replace(path=db_url.key))
-    db_url.admin_url = str(base_url.replace(path=admin_endpoint))
-    return db_url
+    return schemas.URLAdminInfo(
+        **get_public_info(db_url).dict(),
+        admin_url=str(base_url.replace(path=admin_endpoint)),
+    )
 
 @app.get("/")
 def read_root():
@@ -46,7 +57,7 @@ def create_url(url: schemas.URLBase, db: Session = Depends(get_db)):
         raise_bad_request(message="Your provided URL is not valid")
 
     db_url = crud.create_db_url(db=db, url=url)
-    return get_admin_info(db_url)
+    return get_public_info(db_url)
 
 # call for requested url to point to host and key pattern
 @app.get("/{url_key}")
@@ -74,7 +85,7 @@ def forward_to_target_url(
 @app.get(
     "/admin/{secret_key}",
     name="administration info",
-    response_model=schemas.URLInfo,
+    response_model=schemas.URLAdminInfo,
 )
 def get_url_info(
     secret_key: str, request: Request, db: Session = Depends(get_db)

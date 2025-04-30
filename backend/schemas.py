@@ -4,8 +4,10 @@ from pydantic import BaseModel
 class URLBase(BaseModel):
     target_url: str
 
-# allows for deactivating of a url & count of visits
-class URL(URLBase):
+# public info from shortened url
+class URLInfo(BaseModel):
+    url: str
+    target_url: str
     is_active: bool
     clicks: int
 
@@ -13,8 +15,6 @@ class URL(URLBase):
     class Config:
         from_attributes = True
 
-#  potential temp storage of data
-class URLInfo(URL):
-    url: str
+# admin url info seperated from public
+class URLAdminInfo(URLInfo):
     admin_url: str
-
