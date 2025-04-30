@@ -8,6 +8,8 @@ class URLBase(BaseModel):
 class URLInfo(BaseModel):
     url: str
     target_url: str
+    title: str = "No title found"               # metadata scraped
+    description: str = "No description found"   # metadata scraped
     is_active: bool
     clicks: int
 

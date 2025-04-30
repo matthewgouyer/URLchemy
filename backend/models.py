@@ -10,5 +10,7 @@ class URL(Base):
     key = Column(String, unique=True, index=True)       # randomly generated key
     secret_key = Column(String, unique=True, index=True)# url management and stats for our scraper?
     target_url = Column(String, index=True)             # where the provided shortened url points to
+    title = Column(String, nullable=True)               # metadata scraped
+    description = Column(String, nullable=True)         # metadata scraped
     is_active = Column(Boolean, default=True)
     clicks = Column(Integer, default=0)                 # number of clicks on url

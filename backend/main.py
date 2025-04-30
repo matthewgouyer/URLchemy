@@ -7,11 +7,13 @@ from starlette.datastructures import URL
 from . import crud, models, schemas
 from .database import SessionLocal, engine
 from .config import get_settings
+from .scraper import scrape_metadata
+from backend.keygen import create_random_key
 
 app = FastAPI()
 models.Base.metadata.create_all(bind=engine)
 
-# dependency to get database session going and close incase of errors
+# dependency to get database session going and close in case of errors
 def get_db():
     db = SessionLocal()
     try:
@@ -25,6 +27,8 @@ def get_public_info(db_url: models.URL) -> schemas.URLInfo:
     return schemas.URLInfo(
         url=str(base_url.replace(path=db_url.key)),
         target_url=db_url.target_url,
+        title=db_url.title,
+        description=db_url.description,
         is_active=db_url.is_active,
         clicks=db_url.clicks,
     )
@@ -36,7 +40,7 @@ def get_admin_info(db_url: models.URL) -> schemas.URLAdminInfo:
         "administration info", secret_key=db_url.secret_key
     )
     return schemas.URLAdminInfo(
-        **get_public_info(db_url).dict(),
+        **get_public_info(db_url).model_dump(), # using model_dump from pydantic
         admin_url=str(base_url.replace(path=admin_endpoint)),
     )
 
@@ -51,12 +55,19 @@ def raise_not_found(request):
     message = f"Page '{request.url}' Not Found"
     raise HTTPException(status_code=404, detail=message)
 
+
 @app.post("/url", response_model=schemas.URLInfo)
 def create_url(url: schemas.URLBase, db: Session = Depends(get_db)):
     if not validators.url(url.target_url):
-        raise_bad_request(message="Your provided URL is not valid")
+        raise HTTPException(status_code=400, detail="Invalid URL provided")
 
-    db_url = crud.create_db_url(db=db, url=url)
+    metadata = scrape_metadata(url.target_url)
+    db_url = crud.create_db_url(
+        db=db,
+        url=url,
+        title=metadata.get("title", "No title found"),
+        description=metadata.get("description", "No description found")
+    )
     return get_public_info(db_url)
 
 # call for requested url to point to host and key pattern
@@ -64,14 +75,6 @@ def create_url(url: schemas.URLBase, db: Session = Depends(get_db)):
 def forward_to_target_url(
     url_key: str, request: Request, db: Session = Depends(get_db)
 ):
-    '''
-    # query DB for URL w/ given key
-    db_url = (
-        db.query(models.URL)
-        .filter(models.URL.key == url_key, models.URL.is_active)
-        .first()
-    )
-    '''
     # walrus operator for matching url found
     if db_url := crud.get_db_url_by_key(db=db, url_key=url_key):
         crud.update_db_clicks(db=db, db_url=db_url) # increment click count
