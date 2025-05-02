@@ -43,7 +43,3 @@ def deactivate_db_url_by_secret_key(
         db.commit()
         db.refresh(db_url)
     return db_url
-
-# query unique urls for db viz
-def get_unique_urls(db: Session):
-    return db.query(URL.target_url).distinct().filter(URL.is_active).all()

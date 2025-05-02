@@ -1,9 +1,11 @@
-from fastapi import Depends, FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
-from sqlalchemy.orm import Session
-from starlette.responses import RedirectResponse
+import validators
 from urllib.parse import urlparse
+
+from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse, RedirectResponse
+from sqlalchemy.orm import Session
 from sqlalchemy import text
+from starlette.datastructures import URL
 
 from . import crud, models, schemas
 from .database import SessionLocal, engine
@@ -85,6 +87,8 @@ def create_url(url: schemas.URLBase, db: Session = Depends(get_db)):
     }
 
 
+
+
 # call for requested url to point to host and key pattern
 @app.get("/{url_key}")
 def forward_to_target_url(
@@ -100,13 +104,14 @@ def forward_to_target_url(
     :raises HTTPException: If the URL key is not found or inactive.
     """
     # walrus operator for matching url found
-    if db_url := crud.get_url_by_key_type(db=db, key=url_key, key_type="key"):
+    if db_url := crud.get_db_url_by_key(db=db, url_key=url_key):
         crud.update_db_clicks(db=db, db_url=db_url)  # increment click count
-        # redirect to target url using starlette
-        return RedirectResponse(url=db_url.target_url)
+        # redirect to target url
+        return RedirectResponse(db_url.target_url)
     else:
         # raise 404 error if key is not found or inactive
         raise_not_found(request)
+
 
 # call for requested url to point to host and secret key pattern
 @app.get(
@@ -124,7 +129,7 @@ def get_url_info(secret_key: str, request: Request, db: Session = Depends(get_db
     :return: (schemas.URLAdminInfo) Administrative information about the shortened URL.
     :raises HTTPException: If the secret key is not found or inactive.
     """
-    if db_url := crud.get_url_by_key_type(db, secret_key=secret_key):
+    if db_url := crud.get_db_url_by_secret_key(db, secret_key=secret_key):
         return get_admin_info(db_url)
     else:
         raise_not_found(request)
@@ -147,6 +152,7 @@ def delete_url(secret_key: str, request: Request, db: Session = Depends(get_db))
         return {"detail": message}
     else:
         raise_not_found(request)  # raise 404 error if key is not found or deactivated
+
 
 @app.get("/data/urls")
 def get_urls_table(db: Session = Depends(get_db)):
