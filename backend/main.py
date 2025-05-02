@@ -104,10 +104,10 @@ def forward_to_target_url(
     :raises HTTPException: If the URL key is not found or inactive.
     """
     # walrus operator for matching url found
-    if db_url := crud.get_db_url_by_key(db=db, url_key=url_key):
+    if db_url := crud.get_url_by_key_type(db=db, key=url_key, key_type="key"):
         crud.update_db_clicks(db=db, db_url=db_url)  # increment click count
-        # redirect to target url
-        return RedirectResponse(db_url.target_url)
+        # redirect to target url using starlette
+        return RedirectResponse(url=db_url.target_url)
     else:
         # raise 404 error if key is not found or inactive
         raise_not_found(request)
