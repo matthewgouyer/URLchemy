@@ -1,8 +1,9 @@
-import validators
 from fastapi import Depends, FastAPI, HTTPException, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
-from starlette.datastructures import URL
+from starlette.responses import RedirectResponse
+from urllib.parse import urlparse
+from sqlalchemy import text
 
 from . import crud, models, schemas
 from .database import SessionLocal, engine
@@ -64,17 +65,13 @@ def raise_not_found(request):
 @app.post("/url")
 def create_url(url: schemas.URLBase, db: Session = Depends(get_db)):
     """
-    Create a shortened URL for the given target URL.
-    Also scrapes metadata from the target URL and returns a list of unique URLs.
+    Create a shortened URL and scrape metadata for the given target URL.
 
     :param url (schemas.URLBase): The target URL to be shortened.
     :param db (Session): The database session.
-    :return: (dict) A dictionary containing the shortened URL and a list of unique URLs.
+    :return: (dict) A dictionary containing the shortened URL and its metadata.
     :raises HTTPException: If the provided URL is invalid.
     """
-    if not validators.url(url.target_url):
-        raise HTTPException(status_code=400, detail="Invalid URL provided")
-
     metadata = scrape_metadata(url.target_url)
     db_url = crud.create_db_url(
         db=db,
@@ -83,12 +80,8 @@ def create_url(url: schemas.URLBase, db: Session = Depends(get_db)):
         description=metadata.get("description", "No description found"),
     )
 
-    # spit out all unique URLs
-    unique_urls = crud.get_unique_urls(db)
-
     return {
-        "shortened_url": get_public_info(db_url),
-        "unique_urls": [url[0] for url in unique_urls],
+        "shortened_url": get_public_info(db_url)
     }
 
 
@@ -107,14 +100,13 @@ def forward_to_target_url(
     :raises HTTPException: If the URL key is not found or inactive.
     """
     # walrus operator for matching url found
-    if db_url := crud.get_db_url_by_key(db=db, url_key=url_key):
+    if db_url := crud.get_url_by_key_type(db=db, key=url_key, key_type="key"):
         crud.update_db_clicks(db=db, db_url=db_url)  # increment click count
-        # redirect to target url
-        return RedirectResponse(db_url.target_url)
+        # redirect to target url using starlette
+        return RedirectResponse(url=db_url.target_url)
     else:
         # raise 404 error if key is not found or inactive
         raise_not_found(request)
-
 
 # call for requested url to point to host and secret key pattern
 @app.get(
@@ -132,7 +124,7 @@ def get_url_info(secret_key: str, request: Request, db: Session = Depends(get_db
     :return: (schemas.URLAdminInfo) Administrative information about the shortened URL.
     :raises HTTPException: If the secret key is not found or inactive.
     """
-    if db_url := crud.get_db_url_by_secret_key(db, secret_key=secret_key):
+    if db_url := crud.get_url_by_key_type(db, secret_key=secret_key):
         return get_admin_info(db_url)
     else:
         raise_not_found(request)
@@ -156,13 +148,36 @@ def delete_url(secret_key: str, request: Request, db: Session = Depends(get_db))
     else:
         raise_not_found(request)  # raise 404 error if key is not found or deactivated
 
+@app.get("/data/urls")
+def get_urls_table(db: Session = Depends(get_db)):
+    """
+    Retrieve a table of unique URLs from the database, grouped by domain.
 
-"""
+    This endpoint checks if the 'urls' table exists in the database. If it does,
+    it retrieves all rows from the table, extracts unique domains, and returns
+    the first entry for each domain.
 
-# endpoint to get unique URLs list for db viz
-@app.get("/unique-urls")
-def get_unique_urls_endpoint(db: Session = Depends(get_db)):
-    unique_urls = crud.get_unique_urls(db)
-    return {"unique_urls": [url[0] for url in unique_urls]}
+    :param db (Session): The database session.
+    :return: (JSONResponse) A JSON response containing the unique URLs grouped by domain.
+    :raises HTTPException: If the 'urls' table is not found or an error occurs during execution.
+    """
+    try:
+        table_exists = db.execute(
+            text("SELECT name FROM sqlite_master WHERE type='table' AND name='urls';")
+        ).fetchone()
+        if not table_exists:
+            raise HTTPException(status_code=404, detail="Table 'urls' not found")
 
-"""
+        rows = db.execute(text("SELECT * FROM urls")).fetchall()
+        columns = [col[1] for col in db.execute(text("PRAGMA table_info('urls')"))]
+        data = [dict(zip(columns, row)) for row in rows]
+
+        unique_domains = {}
+        for entry in data:
+            domain = urlparse(entry["target_url"]).netloc
+            if domain not in unique_domains:
+                unique_domains[domain] = entry
+
+        return JSONResponse(content={"data": list(unique_domains.values())})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
