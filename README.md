@@ -40,6 +40,12 @@ uvicorn backend.main:app --reload
 
 fast api docs has backend commands for testing
 
+## 5. Run frontend/app.py to start the frontend server.
+
+Either from the terminal or from PyCharm.
+
+Then open dev server in a browser of your choosing. Should be @ http://127.0.0.1:5000/
+
 
 extra note, not sure if necessary:
 .env version control note:
