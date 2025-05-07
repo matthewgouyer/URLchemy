@@ -5,5 +5,3 @@ data/urls.db
 .venv/
 # Ignore Python cache files
 backend/__pycache__
-# Ignore IntelliJ IDEA project files
-.idea/
