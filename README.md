@@ -1,5 +1,3 @@
-temp read me
-
 # initial setup:
 
 ## 1. Clone the repo.
@@ -42,7 +40,11 @@ fast api docs has backend commands for testing
 
 ## 5. Run frontend/app.py to start the frontend server.
 
-Either from the terminal or from PyCharm.
+Either from the terminal 
+
+python frontend/app.py
+
+or from PyCharm directly.
 
 Then open dev server in a browser of your choosing. Should be @ http://127.0.0.1:5000/
 

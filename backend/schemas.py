@@ -1,3 +1,6 @@
+# Code adapted from Real Python Tutorial: https://realpython.com/build-a-python-url-shortener-with-fastapi/
+# Modifications: Title and Description added to schema, config class, separate schema for admin url
+from sqlalchemy import Boolean, Column, Integer, String
 from pydantic import BaseModel
 
 # shortened url gets stored

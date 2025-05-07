@@ -1,3 +1,5 @@
+# Code adapted from Real Python Tutorial: https://realpython.com/build-a-python-url-shortener-with-fastapi/
+# Modifications: Public info, Get admin info, url creation endpoint, URL table creation
 import validators
 from urllib.parse import urlparse
 
