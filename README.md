@@ -1,12 +1,10 @@
-temp read me
+# initial setup:
 
-intial setup:
+## 1. Clone the repo.
 
-1. Clone the repo.
+## 2. Create a virtual environment in the root of the project.
 
-2. Create a virtual environment in the root of the project.
-
-In PyCharm:
+### In PyCharm:
 
 Go to File > Settings > Project: <Project Name> > Python Interpreter.
 Add a new interpreter by clicking the gear icon and selecting "Add".
@@ -16,7 +14,7 @@ Add a new interpreter by clicking the gear icon and selecting "Add".
 
 Or 
 
-In Terminal:
+### In Terminal:
 
 Create a virtual environment in the root of the project.
    python -m venv .venv
@@ -27,15 +25,28 @@ Activate the virtual environment.
    On macOS/Linux:
       source .venv/bin/activate
 
-3. Install the dependencies.
+
+Now open a new terminal window and complete the following steps:
+
+## 3. Install the dependencies.
 pip install -r requirements.txt
 
    
-4. Run the following command to start the server:
+## 4. Run the following command to start the server:
 
 uvicorn backend.main:app --reload
 
 fast api docs has backend commands for testing
+
+## 5. Run frontend/app.py to start the frontend server.
+
+Either from the terminal 
+
+python frontend/app.py
+
+or from PyCharm directly.
+
+Then open dev server in a browser of your choosing. Should be @ http://127.0.0.1:5000/
 
 
 extra note, not sure if necessary:

@@ -1,3 +1,5 @@
+# Code adapted from Real Python Tutorial: https://realpython.com/build-a-python-url-shortener-with-fastapi/
+# Modifications: Title, Description added to db model
 from sqlalchemy import Boolean, Column, Integer, String
 
 from .database import Base

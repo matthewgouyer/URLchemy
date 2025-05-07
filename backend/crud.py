@@ -1,3 +1,5 @@
+# Code adapted from Real Python Tutorial: https://realpython.com/build-a-python-url-shortener-with-fastapi/
+# Modifications: Url creation
 from sqlalchemy.orm import Session
 
 from . import keygen, models, schemas
@@ -26,6 +28,14 @@ def get_url_by_key_type(db: Session, key: str, key_type: str) -> models.URL:
         db.query(models.URL).filter(filter_condition == key, models.URL.is_active).first()
     )
 
+# tried to consolidate the two functions above but it didn't work correctly and is messy
+def get_db_url_by_secret_key(db: Session, secret_key: str) -> models.URL:
+    return (
+        db.query(models.URL)
+        .filter(models.URL.secret_key == secret_key, models.URL.is_active)
+        .first()
+    )
+
 # db click count for shortened url
 def update_db_clicks(db: Session, db_url: models.URL) -> models.URL:
     db_url.clicks += 1
@@ -34,16 +44,10 @@ def update_db_clicks(db: Session, db_url: models.URL) -> models.URL:
     return db_url
 
 # user deactivation w/ admin final say
-def deactivate_db_url_by_secret_key(
-    db: Session, secret_key: str
-) -> models.URL:
-    db_url = get_db_url_by_secret_key(db, secret_key)
+def deactivate_db_url_by_secret_key(db: Session, secret_key: str) -> models.URL:
+    db_url = get_url_by_key_type(db, secret_key, key_type="secret_key")
     if db_url:
         db_url.is_active = False
         db.commit()
         db.refresh(db_url)
     return db_url
-
-# query unique urls for db viz
-def get_unique_urls(db: Session):
-    return db.query(URL.target_url).distinct().filter(URL.is_active).all()

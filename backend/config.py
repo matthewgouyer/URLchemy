@@ -1,3 +1,4 @@
+# Code adapted from Real Python Tutorial: https://realpython.com/build-a-python-url-shortener-with-fastapi/
 from functools import lru_cache
 from pydantic_settings import BaseSettings
 
